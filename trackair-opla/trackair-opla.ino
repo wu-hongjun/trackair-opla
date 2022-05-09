@@ -1,17 +1,10 @@
-
 // ========================================START Opla Initialization========================================
-
 #include <Arduino_MKRIoTCarrier.h>
 #include <Arduino_MKRIoTCarrier_Buzzer.h>
 #include <Arduino_MKRIoTCarrier_Qtouch.h>
 #include <Arduino_MKRIoTCarrier_Relay.h>
 
-#include <Arduino_MKRIoTCarrier.h>
-
-
-
 MKRIoTCarrier carrier;
-
 // ========================================END Opla Initialization========================================
 
 // ========================================START SGP Initialization========================================
@@ -27,6 +20,18 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
     return absoluteHumidityScaled;
 }
 // ========================================END SGP Initialization========================================
+
+// ========================================START LIS2MDL Initialization========================================
+// #include <Adafruit_LIS2MDL.h>
+// #include <Adafruit_Sensor.h>
+
+// /* Assign a unique ID to this sensor at the same time */
+// Adafruit_LIS2MDL lis2mdl = Adafruit_LIS2MDL(12345);
+// #define LIS2MDL_CLK 13
+// #define LIS2MDL_MISO 12
+// #define LIS2MDL_MOSI 11
+// #define LIS2MDL_CS 10
+// ========================================END LIS2MDL Initialization========================================
 
 
 float temperature = 0;
@@ -53,10 +58,11 @@ void setup() {
   bool CARRIER_CASE = true;
 
   Serial.begin(115200);
-
+  
   carrier.begin();
   carrier.display.setRotation(2);
 
+  // For SGP30 Sensor  
   if (! sgp.begin()){
     Serial.println("Sensor not found :(");
     while (1);
@@ -66,6 +72,15 @@ void setup() {
   Serial.print(sgp.serialnumber[1], HEX);
   Serial.println(sgp.serialnumber[2], HEX);
 
+  // For LIS2MDL Sensor
+  // lis2mdl.enableAutoRange(true);  // Enable auto-gain
+  // if (!lis2mdl.begin()) {  // I2C mode
+  //   Serial.println("Ooops, no LIS2MDL detected ... Check your wiring!");
+  //   while (1) delay(10);
+  // }
+  // lis2mdl.printSensorDetails();  // Display some basic information on this sensor
+
+  // For Initializing LEDs
   carrier.leds.setBrightness(10);
   carrier.leds.fill(whiteColor, 0, 5);
   carrier.leds.show();
@@ -75,6 +90,15 @@ void loop() {
 
   temperature = carrier.Env.readTemperature();
   humidity = carrier.Env.readHumidity();
+
+  float air_pressure = carrier.Pressure.readPressure();
+  
+  int r, g, b, light_intensity; 
+  if (carrier.Light.colorAvailable()){
+    carrier.Light.readColor(r, g, b, light_intensity); 
+  }  
+  
+
   toxic_chemical_level = analogRead(A5);  // [1]
   
 
@@ -104,11 +128,19 @@ void loop() {
   Serial.print(", ");
   Serial.print(humidity);
   Serial.print(", ");
+  Serial.print(air_pressure);
+  Serial.print(", ");
+  Serial.print(light_intensity);
+  Serial.print(", ");
   Serial.print(toxic_chemical_level);
   Serial.print(", ");
   Serial.print(tvoc_level);
   Serial.print(", ");
   Serial.print(eco2_level);
+  Serial.print(", ");
+  Serial.print(h2_level);
+  Serial.print(", ");
+  Serial.print(ethanol_level);
   Serial.println();
 
 
