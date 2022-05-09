@@ -3,16 +3,16 @@ import datetime
 
 today_date = datetime.date.today()
 
-arduino_port = "/dev/cu.usbmodem1301" #serial port of Arduino
+arduino_port = "/dev/cu.usbmodem11301" #serial port of Arduino
 baud = 115200 # arduino opla runs at 115200 baud
-fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/data_collected.csv" #name of the CSV file generated
+fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/tata_makerlab_indoor_20220509-18-08.csv" #name of the CSV file generated
 
 ser = serial.Serial(arduino_port, baud)
 print("Connected to Arduino port:" + arduino_port)
 file = open(fileName, "a")
 print("Created file")
 
-samples = 20 #how many samples to collect
+samples = 1000 #how many samples to collect
 print_labels = False
 line = 0 #start at 0 because our header is 0 (not real data)
 while line <= samples:
