@@ -1,3 +1,4 @@
+
 // ========================================START Opla Initialization========================================
 
 #include <Arduino_MKRIoTCarrier.h>
@@ -7,7 +8,7 @@
 
 #include <Arduino_MKRIoTCarrier.h>
 
-#include <SoftwareSerial.h>
+
 
 MKRIoTCarrier carrier;
 
@@ -33,7 +34,8 @@ float humidity = 0;
 int toxic_chemical_level = -1;
 int tvoc_level = -1;
 int eco2_level = -1;
-bool showMainScreen = true;
+int h2_level = -1;
+int ethanol_level = -1;
 
 bool buttonPressed0 = false;
 bool buttonPressed1 = false;
@@ -50,7 +52,7 @@ uint32_t blackColor = carrier.leds.Color(0,0,0);
 void setup() {
   bool CARRIER_CASE = true;
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   carrier.begin();
   carrier.display.setRotation(2);
@@ -74,11 +76,30 @@ void loop() {
   temperature = carrier.Env.readTemperature();
   humidity = carrier.Env.readHumidity();
   toxic_chemical_level = analogRead(A5);  // [1]
+  
+
+  if (! sgp.IAQmeasure()) {
+    Serial.println("Measurement failed");
+    return;
+  }
+
   tvoc_level = sgp.TVOC;
   eco2_level = sgp.eCO2;
 
   carrier.Buttons.update();
 
+  if (! sgp.IAQmeasure()) {
+    Serial.println("Measurement failed");
+    return;
+  }
+  if (! sgp.IAQmeasureRaw()) {
+    Serial.println("Raw Measurement failed");
+    return;
+  }
+
+  h2_level = sgp.rawH2;
+  ethanol_level = sgp.rawEthanol;
+  
   Serial.print(temperature);
   Serial.print(", ");
   Serial.print(humidity);
@@ -198,41 +219,33 @@ void taskOnTouchButton0(){
 }
 
 void taskOnTouchButton1(){
-  carrier.display.fillScreen(ST77XX_BLUE); //blue background
+  printTVOCLevel();
 
-  printHumidity();
-
-  carrier.leds.setPixelColor(1, redColor);
+  carrier.leds.setPixelColor(1, greenColor);
   carrier.leds.show();
   carrier.leds.clear();
 }
 
 void taskOnTouchButton2(){
-  carrier.display.fillScreen(ST77XX_RED); //red background
+  printeCO2Level();
 
-  printTemperature();
-
-  carrier.leds.setPixelColor(2, redColor);
+  carrier.leds.setPixelColor(2, greenColor);
   carrier.leds.show();
   carrier.leds.clear();
 }
 
 void taskOnTouchButton3(){
-  carrier.display.fillScreen(ST77XX_BLUE); //blue background
-  
-  printHumidity();
+  printH2Level();
 
-  carrier.leds.setPixelColor(3, redColor);
+  carrier.leds.setPixelColor(3, greenColor);
   carrier.leds.show();
   carrier.leds.clear();
 }
 
 void taskOnTouchButton4(){
-  carrier.display.fillScreen(ST77XX_RED); //red background
+  printEthanolLevel();
 
-  printTemperature();
-
-  carrier.leds.setPixelColor(4, redColor);
+  carrier.leds.setPixelColor(4, greenColor);
   carrier.leds.show();
   carrier.leds.clear();
 }
@@ -293,6 +306,168 @@ void printToxicChemicalLevel() {
 
 }
 
+void printTVOCLevel() {
+
+  // Threshold, can be changed.
+  int toxic_tvoc_clean = 220;
+  int toxic_tvoc_danger = 2200; // [3]
+
+  // Set background based on air quality.
+  if(tvoc_level < toxic_tvoc_clean){
+    carrier.display.fillScreen(ST77XX_GREEN);    
+  } else if (tvoc_level > toxic_tvoc_danger){
+    carrier.display.fillScreen(ST77XX_RED);
+  } else {
+    carrier.display.fillScreen(ST77XX_YELLOW);
+  }
+    
+  carrier.display.setTextColor(ST77XX_WHITE); // White text
+  carrier.display.setTextSize(3); // Medium sized text
+
+  carrier.display.setCursor(76, 70); //sets position for printing (x and y)
+  carrier.display.println("TVOC");
+  carrier.display.setCursor(73, 100); //sets position for printing (x and y)
+  carrier.display.println("Level");
+  
+  carrier.display.setCursor(80, 150); //sets position for printing (x and y)
+  carrier.display.print(tvoc_level);
+  carrier.display.println(" ppb");
+  
+  if(tvoc_level < toxic_tvoc_clean){
+    carrier.display.setCursor(70, 180);
+    carrier.display.println("Clean");  
+  } else if (tvoc_level > toxic_tvoc_danger){
+    carrier.display.setCursor(40, 180);
+    carrier.display.println("Dangerous");
+  } else {
+    carrier.display.setCursor(50, 180);
+    carrier.display.println("Moderate");
+  }
+
+}
+
+void printeCO2Level() {
+
+  // Threshold, can be changed.
+  int toxic_eco2_clean = 1000;
+  int toxic_eco2_danger = 10000; // [3]
+
+  // Set background based on air quality.
+  if(eco2_level < toxic_eco2_clean){
+    carrier.display.fillScreen(ST77XX_GREEN);    
+  } else if (eco2_level > toxic_eco2_danger){
+    carrier.display.fillScreen(ST77XX_RED);
+  } else {
+    carrier.display.fillScreen(ST77XX_YELLOW);
+  }
+    
+  carrier.display.setTextColor(ST77XX_WHITE); // White text
+  carrier.display.setTextSize(3); // Medium sized text
+
+  carrier.display.setCursor(76, 70); //sets position for printing (x and y)
+  carrier.display.println("eCO2");
+  carrier.display.setCursor(73, 100); //sets position for printing (x and y)
+  carrier.display.println("Level");
+  
+  carrier.display.setCursor(70, 150); //sets position for printing (x and y)
+  carrier.display.print(eco2_level);
+  carrier.display.println(" ppm");
+  
+  if(eco2_level < toxic_eco2_clean){
+    carrier.display.setCursor(70, 180);
+    carrier.display.println("Clean");  
+  } else if (eco2_level > toxic_eco2_danger){
+    carrier.display.setCursor(40, 180);
+    carrier.display.println("Dangerous");
+  } else {
+    carrier.display.setCursor(50, 180);
+    carrier.display.println("Moderate");
+  }
+
+}
+
+void printH2Level() {
+
+  // Threshold, can be changed.
+  int toxic_h2_clean = 14000;
+  int toxic_h2_danger = 20000; // [3]
+
+  // Set background based on air quality.
+  if(h2_level < toxic_h2_clean){
+    carrier.display.fillScreen(ST77XX_GREEN);    
+  } else if (h2_level > toxic_h2_danger){
+    carrier.display.fillScreen(ST77XX_RED);
+  } else {
+    carrier.display.fillScreen(ST77XX_YELLOW);
+  }
+    
+  carrier.display.setTextColor(ST77XX_WHITE); // White text
+  carrier.display.setTextSize(3); // Medium sized text
+
+  carrier.display.setCursor(80, 40); //sets position for printing (x and y)
+  carrier.display.println("Raw");
+  carrier.display.setCursor(90, 70); //sets position for printing (x and y)
+  carrier.display.println("H2");
+  carrier.display.setCursor(73, 100); //sets position for printing (x and y)
+  carrier.display.println("Level");
+  
+  carrier.display.setCursor(70, 150); //sets position for printing (x and y)
+  carrier.display.println(h2_level);
+  
+  if(h2_level < toxic_h2_clean){
+    carrier.display.setCursor(70, 180);
+    carrier.display.println("Clean");  
+  } else if (h2_level > toxic_h2_danger){
+    carrier.display.setCursor(40, 180);
+    carrier.display.println("Dangerous");
+  } else {
+    carrier.display.setCursor(50, 180);
+    carrier.display.println("Moderate");
+  }
+
+}
+
+void printEthanolLevel() {
+
+  // Threshold, can be changed.
+  int toxic_ethanol_clean = 25000;
+  int toxic_ethanol_danger = 40000; // [3]
+
+  // Set background based on air quality.
+  if(ethanol_level < toxic_ethanol_clean){
+    carrier.display.fillScreen(ST77XX_GREEN);    
+  } else if (ethanol_level > toxic_ethanol_danger){
+    carrier.display.fillScreen(ST77XX_RED);
+  } else {
+    carrier.display.fillScreen(ST77XX_YELLOW);
+  }
+    
+  carrier.display.setTextColor(ST77XX_WHITE); // White text
+  carrier.display.setTextSize(3); // Medium sized text
+
+  carrier.display.setCursor(80, 40); //sets position for printing (x and y)
+  carrier.display.println("Raw");
+  carrier.display.setCursor(55, 70); //sets position for printing (x and y)
+  carrier.display.println("Ethanol");
+  carrier.display.setCursor(73, 100); //sets position for printing (x and y)
+  carrier.display.println("Level");
+  
+  carrier.display.setCursor(70, 150); //sets position for printing (x and y)
+  carrier.display.println(ethanol_level);
+  
+  if(ethanol_level < toxic_ethanol_clean){
+    carrier.display.setCursor(70, 180);
+    carrier.display.println("Clean");  
+  } else if (ethanol_level > toxic_ethanol_danger){
+    carrier.display.setCursor(40, 180);
+    carrier.display.println("Dangerous");
+  } else {
+    carrier.display.setCursor(50, 180);
+    carrier.display.println("Moderate");
+  }
+
+}
+
 void printTemperature() {
   carrier.display.fillScreen(ST77XX_RED); //red background
   carrier.display.setTextColor(ST77XX_WHITE); //white text
@@ -322,3 +497,5 @@ void printHumidity() {
 //      https://www.hackster.io/omarecd/monitoring-of-indoor-environmental-conditions-153e32
 // [2]: Adafruit SGP30 TVOC/eCO2 Gas Sensor Test
 //      https://learn.adafruit.com/adafruit-sgp30-gas-tvoc-eco2-mox-sensor/arduino-code
+// [3]: Safe CO2 and TVOC numbers
+//      https://www.ibm.com/docs/en/mwi?topic=shields-air-quality-shield
