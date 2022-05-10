@@ -5,7 +5,7 @@ today_date = datetime.date.today()
 
 arduino_port = "/dev/cu.usbmodem11301" #serial port of Arduino
 baud = 115200 # arduino opla runs at 115200 baud
-fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/house_18P_20220509-20-14.csv" #name of the CSV file generated
+fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/house_19L_20220509-21-21.csv" #name of the CSV file generated
 
 ser = serial.Serial(arduino_port, baud)
 print("Connected to Arduino port:" + arduino_port)
