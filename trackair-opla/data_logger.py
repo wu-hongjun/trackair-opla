@@ -1,23 +1,29 @@
+# TrackAir Data Logger
+# 
+"""
+Receive data collected from Arduino Opla using the Serial port.
+Input (str): A string of numbers separated by comma.
+Output (csv): A csv data file of all the sample collected in a given sample count.  
+"""
+
 import serial
 import datetime
 
 today_date = datetime.date.today()
 
-arduino_port = "/dev/cu.usbmodem21301" #serial port of Arduino
-baud = 115200 # arduino opla runs at 115200 baud
-fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/house_Lobby_20220509-22-14.csv" #name of the CSV file generated
+arduino_port = "/dev/cu.usbmodem21301" #Serial port of Arduino
+baud = 115200 # Arduino Opla runs at 115200 baud
+fileName = "/Users/hongjunwu/Documents/GitHub/trackair-opla/trackair-opla/demo_data_collection.csv" #name of the CSV file generated
 
 ser = serial.Serial(arduino_port, baud)
 print("Connected to Arduino port:" + arduino_port)
 file = open(fileName, "a")
 print("Created file")
 
-samples = 1000 #how many samples to collect
+samples = 100 # Number of samples to collect.
 print_labels = False
 line = 0 #start at 0 because our header is 0 (not real data)
 while line <= samples:
-    # incoming = ser.read(9999)
-    # if len(incoming) > 0:
     if print_labels:
         if line==0:
             print("Printing Column Headers")

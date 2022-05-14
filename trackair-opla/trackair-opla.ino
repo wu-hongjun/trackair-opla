@@ -42,6 +42,11 @@ int eco2_level = -1;
 int h2_level = -1;
 int ethanol_level = -1;
 
+int moderateNote = 3;
+int dangerousNote = 6;
+int moderateNoteDuration = 50;
+int dangerousNoteDuration = 5;
+
 bool buttonPressed0 = false;
 bool buttonPressed1 = false;
 bool buttonPressed2 = false;
@@ -382,15 +387,26 @@ void printeCO2Level() {
 
   // Threshold, can be changed.
   int toxic_eco2_clean = 1000;
-  int toxic_eco2_danger = 10000; // [3]
+  int toxic_eco2_danger = 4000; // [3]
 
   // Set background based on air quality.
   if(eco2_level < toxic_eco2_clean){
-    carrier.display.fillScreen(ST77XX_GREEN);    
+    carrier.display.fillScreen(ST77XX_GREEN);  
+    carrier.Buzzer.sound(moderateNote);
+    delay(moderateNoteDuration);
+    //delay(moderateNoteDuration);
+    carrier.Buzzer.noSound(); 
   } else if (eco2_level > toxic_eco2_danger){
     carrier.display.fillScreen(ST77XX_RED);
+    carrier.Buzzer.sound(10);
+    delay(dangerousNoteDuration);
+    carrier.Buzzer.noSound();
   } else {
     carrier.display.fillScreen(ST77XX_YELLOW);
+    carrier.Buzzer.sound(dangerousNote);
+    delay(dangerousNoteDuration);
+    //delay(moderateNoteDuration);
+    carrier.Buzzer.noSound();
   }
     
   carrier.display.setTextColor(ST77XX_WHITE); // White text
